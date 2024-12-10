@@ -67,4 +67,50 @@ instance Show (Token a) where
   show (StringLit _ s) = surround s
   show (NumLit _ n) = surround . show $ n
   show (EOF _) = "EOF"
+
+  showPosn (AlexPn _ l c) = show l ++ ":" ++ show c
+
+mkL :: (AlexPosn -> String -> Token AlexPosn) -> AlexInput -> Int -> Alex (Token AlexPosn)
+mkL tokfn (pos, _, _, input) len = return (tokfn pos $ take len input)
+
+symbol :: (AlexPosn -> Token AlexPosn) -> AlexInput -> Int -> Alex (Token AlexPosn)
+symbol s = mkL (\p _ -> s p)
+
+digit :: AlexInput -> Int -> Alex (Token AlexPosn)
+digit = mkL (\p s -> NumLit p $ read s)
+
+addChar c = alexGetUserState >>= alexSetUserState . (c:) >> alexMonadScan
+
+appendChar c _ _ = addChar c
+strChar (_, _, _, input) _ = addChar $ head input
+
+unicodeChar (_, _, _, input) _ = case readHex $ drop 2 input of
+  [(value, _)] -> addChar $ chr value
+  _ -> alexError "invalid escape sequence"
+
+emitStr :: AlexAction (Token AlexPosn)
+emitStr (pos, _, _, _) _ = do
+  strAcc <- alexGetUserState <&> reverse
+  alexSetUserState ""
+  return $ StringLit pos strAcc
+
+get_pos :: Alex AlexPosn
+get_pos = Alex (Right . (id &&& alex_pos))
+
+alexEOF = do
+  pos <- get_pos
+  return $ EOF pos
+
+type AlexUserState = String
+alexInitUserState = ""
+
+-- loop :: Alex [Token AlexPosn]
+loop = do
+  tok' <- alexMonadScan
+  case tok' of
+    EOF _ -> return []
+    t -> (t :) <$> loop
+
+scanTokens :: String -> Either String [Token AlexPosn]
+scanTokens = flip runAlex loop
 }
