@@ -1,3 +1,7 @@
+import Control.Applicative
+import Data.Char (isDigit)
+
+
 -- The 'JSON' data type represents the possible structures and values of a JSON document.
 --
 -- Constructors:
@@ -52,6 +56,43 @@ instance Applicative Parser where
       Just (input'' , f a)
 
 
+instance Alternative Parser where
+  empty = Parser $ \_ -> Nothing
+  (Parser p1) <|> (Parser p2) =  Parser $ \input -> p1 input <|> p2 input
+
+
+spanP :: (Char -> Bool) -> Parser String
+spanP f = 
+  Parser $ \input -> 
+    let (token , rest) = span f input
+     in Just (rest, token)
+
+notNull :: Parser [a] -> Parser [a]
+notNull (Parser p) = 
+  Parser $ \input -> do 
+    (input' , xs) <- p input
+    if null xs
+      then Nothing
+      else Just (input', xs)
+
+
+-- jNumber :: Parser JSON
+-- jNumber = f <$> notNull(spanP isDigit)
+--   where f ds = JNumber $ read ds
+
+jNumber :: Parser JSON
+jNumber = f <$> notNull (spanP isDigit) <*> optionalFraction
+  where
+    optionalFraction = (charP '.' *> spanP isDigit) <|> pure ""
+    f intPart fracPart 
+      | null fracPart = JNumber $ read intPart
+      | otherwise     = JNumber $ read (intPart ++ "." ++ fracPart)
+
+
+jNullP :: Parser JSON
+jNullP = (\_ -> JNull) <$> stringP "null"
+
+
 
 charP :: Char -> Parser Char
 charP x = Parser f
@@ -63,5 +104,16 @@ charP x = Parser f
 
 stringP :: String -> Parser String
 stringP = sequenceA . map charP
+
+--bool is eiher true or false
+--we will use alternative interface
+jBoolP :: Parser JSON
+jBoolP = f <$> (stringP "true" <|> stringP "false")
+  where f "true" = JBool True
+        f "false" = JBool False
+        f _       = undefined
+
+jValue :: Parser JSON
+jValue = jNullP <|> jBoolP <|> jNumber
 
 
