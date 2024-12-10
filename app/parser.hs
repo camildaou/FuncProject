@@ -113,7 +113,17 @@ jBoolP = f <$> (stringP "true" <|> stringP "false")
         f "false" = JBool False
         f _       = undefined
 
+
+stringLiteral :: Parser String
+stringLiteral = spanP (/= '"') -- everything that is not quote
+
+jString :: Parser String -- we need to add espacing support.
+-- making sure it starts and ends with a quote and string in middle
+jString = JString <$> (charP '"' *> stringLiteral <* charP '"')
+
 jValue :: Parser JSON
-jValue = jNullP <|> jBoolP <|> jNumber
+jValue = jNullP <|> jBoolP <|> jNumber <|> jString
+
+
 
 
