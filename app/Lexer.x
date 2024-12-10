@@ -44,4 +44,27 @@ tokens :-
   <string>  [^\"]           { strChar              }
   <string>  \"              { emitStr `andBegin` 0 }
 
-{}
+{
+data Token a = LBrace    { tokLoc :: a }
+             | RBrace    { tokLoc :: a }
+             | LBracket  { tokLoc :: a }
+             | RBracket  { tokLoc :: a }
+             | Colon     { tokLoc :: a }
+             | Comma     { tokLoc :: a }
+             | StringLit { tokLoc :: a, tokStr :: String }
+             | NumLit    { tokLoc :: a, tokNum :: Float }
+             | EOF       { tokLoc :: a }
+
+surround = ("\"" ++) . (++ "\"")
+
+instance Show (Token a) where
+  show (LBrace _) = surround "{"
+  show (RBrace _) = surround "}"
+  show (LBracket _) = surround "["
+  show (RBracket _) = surround "]"
+  show (Colon _) = surround ":"
+  show (Comma _) = surround ","
+  show (StringLit _ s) = surround s
+  show (NumLit _ n) = surround . show $ n
+  show (EOF _) = "EOF"
+}
