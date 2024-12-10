@@ -1,6 +1,6 @@
 import Control.Applicative
 import Data.Char (isDigit)
-
+import Data.Char (isSpace)
 
 -- The 'JSON' data type represents the possible structures and values of a JSON document.
 --
@@ -121,8 +121,25 @@ jString :: Parser String -- we need to add espacing support.
 -- making sure it starts and ends with a quote and string in middle
 jString = JString <$> (charP '"' *> stringLiteral <* charP '"')
 
+sepBy :: Parser a -> Parser b -> Parser [b]
+-- many parse this until it fails and the : to concatenate the results
+sepBy sep element = 
+ (:) <$> element <*> many (optional sep *> element) --optional in case of an empty input to not crash.
+
+
+
+spaceChar :: Parser String
+spaceChar = spanP isSpace
+
+jArray :: Parser JSON
+jArray = JArray <$> (charP '[' *> spaceChar *> elements <* spaceChar <* charP ']') -- starts and ends with [] and has elements in between
+  where
+    elements = sepBy (spaceChar *> charP ',' <* spaceChar) jValue -- elemts are separated by comma
+
+
+
 jValue :: Parser JSON
-jValue = jNullP <|> jBoolP <|> jNumber <|> jString
+jValue = jNullP <|> jBoolP <|> jNumber <|> jString <|> jArray
 
 
 
