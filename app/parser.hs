@@ -115,16 +115,16 @@ jBoolP = f <$> (stringP "true" <|> stringP "false")
 
 
 stringLiteral :: Parser String
-stringLiteral = spanP (/= '"') -- everything that is not quote
+stringLiteral = (charP '"' *> spanP (/= '"') <* charP '"')
 
-jString :: Parser String -- we need to add espacing support.
+jString :: Parser JSON -- we need to add espacing support.
 -- making sure it starts and ends with a quote and string in middle
-jString = JString <$> (charP '"' *> stringLiteral <* charP '"')
+jString = JString <$> stringLiteral 
 
 sepBy :: Parser a -> Parser b -> Parser [b]
 -- many parse this until it fails and the : to concatenate the results
-sepBy sep element = 
- (:) <$> element <*> many (optional sep *> element) --optional in case of an empty input to not crash.
+sepBy sep element = (:) <$> element <*> many (sep *> element) <|> pure []
+-- <|> to handle the case where the parser fails, example: empty
 
 
 
@@ -136,10 +136,17 @@ jArray = JArray <$> (charP '[' *> spaceChar *> elements <* spaceChar <* charP ']
   where
     elements = sepBy (spaceChar *> charP ',' <* spaceChar) jValue -- elemts are separated by comma
 
+jObject :: Parser JSON 
+jObject =
+  JObject <$>
+  (charP '{' *> spaceChar *> sepBy (spaceChar *> charP ',' <* spaceChar) pair <* spaceChar <* charP '}')
+  where
+   pair = liftA2 (,) (stringLiteral <* spaceChar <* charP ':' <* spaceChar) jValue
+
 
 
 jValue :: Parser JSON
-jValue = jNullP <|> jBoolP <|> jNumber <|> jString <|> jArray
+jValue = jNullP <|> jBoolP <|> jNumber <|> jString <|> jArray <|> jObject
 
 
 
