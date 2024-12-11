@@ -1,0 +1,31 @@
+{
+  "employees": [
+    {
+      "id": "E123",
+      "name": "Alice Johnson",
+      "department": "Marketing",
+      "position": "Manager",
+      "hire_date": "2020-01-15",
+      "salary": 75000,
+      "active": true
+    },
+    {
+      "id": "E124",
+      "name": "Bob Smith",
+      "department": "Engineering",
+      "position": "Software Engineer",
+      "hire_date": "2019-09-22",
+      "salary": 85000,
+      "active": true
+    },
+    {
+      "id": "E125",
+      "name": "Charlie Brown",
+      "department": "Sales",
+      "position": "Sales Representative",
+      "hire_date": "2021-03-30",
+      "salary": 60000,
+      "active": false
+    }
+  ]
+}

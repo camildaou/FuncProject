@@ -1,0 +1,36 @@
+{
+  "products": [
+    {
+      "id": "001",
+      "name": "Laptop",
+      "category": "Electronics",
+      "price": 899.99,
+      "quantity_in_stock": 150,
+      "available": true
+    },
+    {
+      "id": "002",
+      "name": "Wireless Mouse",
+      "category": "Accessories",
+      "price": 25.99,
+      "quantity_in_stock": 300,
+      "available": true
+    },
+    {
+      "id": "003",
+      "name": "Keyboard",
+      "category": "Accessories",
+      "price": 49.99,
+      "quantity_in_stock": 200,
+      "available": true
+    },
+    {
+      "id": "004",
+      "name": "Smartphone",
+      "category": "Electronics",
+      "price": 699.99,
+      "quantity_in_stock": 50,
+      "available": true
+    }
+  ]
+}

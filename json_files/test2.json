@@ -1,0 +1,22 @@
+{
+  "name": "John Doe",
+  "age": 29,
+  "email": "johndoe@example.com",
+  "address": {
+    "street": "123 Maple St",
+    "city": "Springfield",
+    "state": "IL",
+    "zip": "62701"
+  },
+  "phone_numbers": [
+    {
+      "type": "mobile",
+      "number": "+1-555-1234"
+    },
+    {
+      "type": "home",
+      "number": "+1-555-5678"
+    }
+  ],
+  "active": true
+}
