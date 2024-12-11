@@ -144,10 +144,14 @@ jObject =
    pair = liftA2 (,) (stringLiteral <* spaceChar <* charP ':' <* spaceChar) jValue
 
 
+parseFile :: FilePath -> Parser a -> IO (Maybe a)
+parseFile fileName p = do
+ input <- readFile fileName
+ return (snd <$> runParser p input)
+
 
 jValue :: Parser JSON
 jValue = jNullP <|> jBoolP <|> jNumber <|> jString <|> jArray <|> jObject
-
 
 
 
