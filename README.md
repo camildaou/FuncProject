@@ -1,6 +1,6 @@
 <h1>JSON Parser Using Haskell</h1>
 <p>
-  This repository contains a simple, minimalistic Haskell JSON parser written from scratch with the help of using Alex for the lexer.
+  This repository contains a simple, minimalistic Haskell JSON parser written from scratch with the help of using Alex for the lexer to generate tokens.
   This repository was made for the functional programming course
 </p>
 <p><b>Documentation: </b><a href="#">link should go here</a></p>
