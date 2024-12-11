@@ -44,17 +44,17 @@ instance Monad Parser where
 
 
 matchToken :: (Token AlexPosn -> Maybe a) -> Parser a
-matchToken test = Parser $ \tokens -> case tokens of
+matchToken token_input = Parser $ \tokens -> case tokens of
   (tok:rest) -> do
     let _ = print tok
-    case test tok of
+    case token_input tok of
       Just value -> Just (rest, value)
       Nothing    -> Nothing
   [] -> Nothing
 
 
 tokenP :: (Token AlexPosn -> Bool) -> Parser (Token AlexPosn)
-tokenP test = matchToken (\tok -> if test tok then Just tok else Nothing)
+tokenP token_input = matchToken (\tok -> if token_input tok then Just tok else Nothing)
 
 -- symbolP :: Token AlexPosn -> Parser ()
 -- symbolP expected = () <$ tokenP (== expected)
@@ -86,17 +86,17 @@ symbolP expected = () <$ tokenP (\tok -> case (expected, tok) of
 
 
 jNullP :: Parser JSON
-jNullP = matchToken test
+jNullP = matchToken token_input
   where
-  test (NullLit _) = Just JNull
-  test _           = Nothing
+  token_input (NullLit _) = Just JNull
+  token_input _           = Nothing
 
 jBoolP :: Parser JSON
-jBoolP = matchToken test
+jBoolP = matchToken token_input
   where
-  test (BoolLit _ True)  = Just (JBool True)
-  test (BoolLit _ False) = Just (JBool False)
-  test _ = Nothing
+  token_input (BoolLit _ True)  = Just (JBool True)
+  token_input (BoolLit _ False) = Just (JBool False)
+  token_input _ = Nothing
 
 jNumber :: Parser JSON
 jNumber = matchToken input
@@ -105,10 +105,10 @@ jNumber = matchToken input
   input _            = Nothing
 
 jString :: Parser JSON
-jString = matchToken test
+jString = matchToken token_input
   where
-  test (StringLit _ s) = Just (JString s)
-  test _               = Nothing
+  token_input (StringLit _ s) = Just (JString s)
+  token_input _               = Nothing
 
 sepBy :: Parser a -> Parser b -> Parser [b]
 sepBy sep element = (:) <$> element <*> many (sep *> element) <|> pure []
@@ -161,10 +161,10 @@ jArray = do
 --     symbolP (Colon dummyPos)
 --     v <- jValue
 --     return (k, v)
---   key = matchToken test
+--   key = matchToken token_input
 --     where
---     test (StringLit _ s) = Just s
---     test _ = Nothing        
+--     token_input (StringLit _ s) = Just s
+--     token_input _ = Nothing        
 
 jObject :: Parser JSON
 jObject = do
@@ -179,10 +179,10 @@ jObject = do
       symbolP (Colon dummyPos)
       v <- jValue
       return (k, v)
-    key = matchToken test
+    key = matchToken token_input
       where
-        test (StringLit _ s) = Just s  -- Match the StringLit token for keys
-        test _ = Nothing
+        token_input (StringLit _ s) = Just s  -- Match the StringLit token for keys
+        token_input _ = Nothing
 
 
 jValue :: Parser JSON
