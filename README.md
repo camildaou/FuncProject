@@ -3,7 +3,7 @@
   This repository contains a simple, minimalistic Haskell JSON parser written from scratch with the help of using Alex for the lexer to generate tokens.
   This repository was made for the functional programming course
 </p>
-<p><b>Documentation: </b><a href="#">link should go here</a></p>
+<p><b>Documentation: </b><a href="https://testusjedu-my.sharepoint.com/:b:/g/personal/christina_haber_net_usj_edu_lb/EdHsAig2RMtOqsf7ZSKu1XMBRZrSH7r3zZzZalBSsXZdDg?e=ZbzdlW">Documentation</a></p>
   <h2>Contributors:</h2>
   <li>
   Camil Daou
@@ -32,8 +32,8 @@
 <p>
 
   ```
-json-parser <file1.json> <file2.json> ... <fieldPath | ALLFIELDS | FIELDNAMES> [-o output.txt]
-json-parser <directory> <fieldPath | ALLFIELDS | FIELDNAMES> [-o output.txt]
+cabal v2-run json-parser <file1.json> <file2.json> ... <fieldPath | ALLFIELDS | FIELDNAMES> [-o output.txt]
+cabal v2-run json-parser <directory> <fieldPath | ALLFIELDS | FIELDNAMES> [-o output.txt]
 ```
 </p>
 <li>Adding the -o with the filename will redirect the output to a file</li>
@@ -101,4 +101,30 @@ name: "John Doe"<br>
   cabal v2-run json-parser -- test.json name -o output.txt
   ```
 
+</p>
+
+<p>
+  
+  ```
+  cabal v2-run json-parser -- json-files/test.json json-files/test1.json json-files/test2.jsonname ALLFIELDS -o output.txt
+  ```
+
+</p>
+
+<p>
+  
+</p>
+
+<p>
+  
+  ```
+  cabal v2-run json-parser json-files/test.json json-files/test1.json json-files/test2.jsonname employees.name 
+  ```
+
+</p>
+
+<p>
+Alice Johnson
+Bob Smith
+Charlie Brown
 </p>
