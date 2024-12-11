@@ -99,7 +99,7 @@ name: "John Doe"<br>
 <p>
   
   ```
-  cabal v2-run json-parser json-files/test.json json-files/test1.json json-files/test2.json employees.name 
+  cabal v2-run json-parser json_files/test.json json_files/test1.json json_files/test2.json employees.name 
   ```
 
 </p>
@@ -123,7 +123,7 @@ Charlie Brown<br>
 <p>
   
   ```
-  cabal v2-run json-parser -- json-files/test.json json-files/test1.json json-files/test2.json ALLFIELDS -o output.txt
+  cabal v2-run json-parser -- json_files/test.json json_files/test1.json json_files/test2.json ALLFIELDS -o output.txt
   ```
 
 </p>
@@ -131,7 +131,7 @@ Charlie Brown<br>
 <p>
   
   ```
-  cabal v2-run json-parser -- json-files ALLFIELDS -o output.txt
+  cabal v2-run json-parser -- json_files ALLFIELDS -o output.txt
   ```
 
 </p>
