@@ -30,6 +30,9 @@ tokens :-
   <0>       "]"             { symbol RBracket      }
   <0>       ":"             { symbol Colon         }
   <0>       ","             { symbol Comma         }
+  <0>       "true"          { mkBoolLit True       }
+  <0>       "false"         { mkBoolLit False      }
+  <0>       "null"          { mkNullLit            }
   <0>       @number         { digit                }
   <0>       \"              { begin string         }
   <string>  \\b             { appendChar '\b'      }
@@ -53,6 +56,8 @@ data Token a = LBrace    { tokLoc :: a }
              | Comma     { tokLoc :: a }
              | StringLit { tokLoc :: a, tokStr :: String }
              | NumLit    { tokLoc :: a, tokNum :: Float }
+             | BoolLit   { tokLoc :: a, tokBool :: Bool }
+             | NullLit   { tokLoc :: a }
              | EOF       { tokLoc :: a }
 
 surround = ("\"" ++) . (++ "\"")
@@ -66,12 +71,21 @@ instance Show (Token a) where
   show (Comma _) = surround ","
   show (StringLit _ s) = surround s
   show (NumLit _ n) = surround . show $ n
+  show (BoolLit _ True) = "True"
+  show (BoolLit _ False) = "False"
+  show (NullLit _) = "null"
   show (EOF _) = "EOF"
 
   showPosn (AlexPn _ l c) = show l ++ ":" ++ show c
 
 mkL :: (AlexPosn -> String -> Token AlexPosn) -> AlexInput -> Int -> Alex (Token AlexPosn)
 mkL tokfn (pos, _, _, input) len = return (tokfn pos $ take len input)
+
+mkBoolLit :: Bool -> AlexInput -> Int -> Alex (Token AlexPosn)
+mkBoolLit b = mkL (\p _ -> BoolLit p b)
+
+mkNullLit :: AlexInput -> Int -> Alex (Token AlexPosn)        -- Added helper for null
+mkNullLit = mkL (\p _ -> NullLit p)
 
 symbol :: (AlexPosn -> Token AlexPosn) -> AlexInput -> Int -> Alex (Token AlexPosn)
 symbol s = mkL (\p _ -> s p)
