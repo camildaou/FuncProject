@@ -32,7 +32,8 @@
 <p>
 
   ```
- cabal v2-run json-parser <file.json> <field.path | ALLFIELDS | FIELDNAMES> [-o output.txt]
+json-parser <file1.json> <file2.json> ... <fieldPath | ALLFIELDS | FIELDNAMES> [-o output.txt]
+json-parser <directory> <fieldPath | ALLFIELDS | FIELDNAMES> [-o output.txt]
 ```
 </p>
 <li>Adding the -o with the filename will redirect the output to a file</li>
@@ -94,3 +95,10 @@ name: "John Doe"<br>
 
 </p>
 
+<p>
+  
+  ```
+  cabal v2-run json-parser -- test.json name -o output.txt
+  ```
+
+</p>
