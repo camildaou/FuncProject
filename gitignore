@@ -2,4 +2,7 @@ dist
 dist-*
 cabal-dev
 *.o
-dist-newstyle/
+dist-newstyle/*
+build
+cache
+misc

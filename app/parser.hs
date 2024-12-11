@@ -1,157 +1,210 @@
-import Control.Applicative
-import Data.Char (isDigit)
-import Data.Char (isSpace)
+module Parser (JSON(..), parseFile, runParse, jBoolP, jValue) where
 
--- The 'JSON' data type represents the possible structures and values of a JSON document.
---
--- Constructors:
--- 
--- * 'JObject' [(String, JSON)]
---     - Represents a JSON object, which is a collection of key-value pairs.
---     - Each key is a 'String', and the associated value is a 'JSON' type (allowing nesting).
---     - Example: { "key1": "value1", "key2": { "nestedKey": true } }
--- 
--- * 'JArray' [JSON]
---     - Represents a JSON array, which is an ordered list of JSON values.
---     - Example: [1, "text", null, { "key": "value" }]
---
--- Deriving:
--- 
--- * 'Show': Allows the 'JSON' type to be displayed as a string for debugging.
--- * 'Eq': Enables comparison of 'JSON' values for equality.
+import Lexer
+import Control.Applicative
+import Data.Maybe
+
+import Debug.Trace (trace)
 
 
 data JSON
-    = JNull 
-    | JBool Bool 
-    | JString String             
-    | JNumber Double 
-    | JArray [JSON]
-    | JObject [(String, JSON)]                                  
+  = JNull
+  | JBool Bool
+  | JString String
+  | JNumber Float
+  | JArray [JSON]
+  | JObject [(String, JSON)]
   deriving (Show, Eq)
 
-
---Implementation of a parser
---the parser takes a string and return whaterver we want to parse
-
--- Maybe is used in case the parser fails when the input does not conform the expected format
---runParser is the fct that defines what the parser does
-newtype Parser a = Parser 
-    { runParser :: String -> Maybe(String ,a)
-    } 
+newtype Parser a = Parser
+  { runParser :: [Token AlexPosn] -> Maybe ([Token AlexPosn], a)
+  }
 
 instance Functor Parser where
-    fmap f (Parser p) = 
-        Parser $ \input -> do
-            (input',x) <- p input
-            Just (input', f x)
+  fmap f (Parser p) = Parser $ \tokens -> do
+    (rest, result) <- p tokens
+    Just (rest, f result)
 
--- this allows chaining of the Parser
 instance Applicative Parser where
-  pure x = Parser $ \input -> Just (input, x)
-  (Parser p1) <*> (Parser p2) =
-    Parser $ \input -> do
-      (input', f) <- p1 input
-      (input'', a) <- p2 input'
-      Just (input'' , f a)
-
+  pure x = Parser $ \tokens -> Just (tokens, x)
+  (Parser pf) <*> (Parser pa) = Parser $ \tokens -> do
+    (tokens', f) <- pf tokens
+    (tokens'', a) <- pa tokens'
+    Just (tokens'', f a)
 
 instance Alternative Parser where
-  empty = Parser $ \_ -> Nothing
-  (Parser p1) <|> (Parser p2) =  Parser $ \input -> p1 input <|> p2 input
+  empty = Parser $ const Nothing
+  (Parser p1) <|> (Parser p2) = Parser $ \tokens -> p1 tokens <|> p2 tokens
+
+instance Monad Parser where
+  return = pure
+  (Parser pa) >>= f = Parser $ \tokens -> do
+    (tokens', a) <- pa tokens
+    runParser (f a) tokens'
 
 
-spanP :: (Char -> Bool) -> Parser String
-spanP f = 
-  Parser $ \input -> 
-    let (token , rest) = span f input
-     in Just (rest, token)
-
-notNull :: Parser [a] -> Parser [a]
-notNull (Parser p) = 
-  Parser $ \input -> do 
-    (input' , xs) <- p input
-    if null xs
-      then Nothing
-      else Just (input', xs)
+matchToken :: (Token AlexPosn -> Maybe a) -> Parser a
+matchToken test = Parser $ \tokens -> case tokens of
+  (tok:rest) -> do
+    let _ = print tok
+    case test tok of
+      Just value -> Just (rest, value)
+      Nothing    -> Nothing
+  [] -> Nothing
 
 
--- jNumber :: Parser JSON
--- jNumber = f <$> notNull(spanP isDigit)
---   where f ds = JNumber $ read ds
+tokenP :: (Token AlexPosn -> Bool) -> Parser (Token AlexPosn)
+tokenP test = matchToken (\tok -> if test tok then Just tok else Nothing)
 
-jNumber :: Parser JSON
-jNumber = f <$> notNull (spanP isDigit) <*> optionalFraction
-  where
-    optionalFraction = (charP '.' *> spanP isDigit) <|> pure ""
-    f intPart fracPart 
-      | null fracPart = JNumber $ read intPart
-      | otherwise     = JNumber $ read (intPart ++ "." ++ fracPart)
+-- symbolP :: Token AlexPosn -> Parser ()
+-- symbolP expected = () <$ tokenP (== expected)
+
+-- symbolP :: Token AlexPosn -> Parser ()
+-- symbolP expected = spaceP *> (() <$ tokenP (== expected)) <* spaceP
+
+-- symbolP :: Token AlexPosn -> Parser ()
+-- symbolP expected = () <$ tokenP (\tok -> case (expected, tok) of
+--     (LBracket _, LBracket _) -> True
+--     (RBracket _, RBracket _) -> True
+--     (Comma _, Comma _)       -> True
+--     (BoolLit _ b1, BoolLit _ b2) -> b1 == b2
+--     (NullLit _, NullLit _)   -> True
+--     _ -> False)
+
+symbolP :: Token AlexPosn -> Parser ()
+symbolP expected = () <$ tokenP (\tok -> case (expected, tok) of
+    (LBrace _, LBrace _)   -> True
+    (RBrace _, RBrace _)   -> True
+    (LBracket _, LBracket _) -> True
+    (RBracket _, RBracket _) -> True
+    (Comma _, Comma _)     -> True
+    (Colon _, Colon _)     -> True
+    (BoolLit _ b1, BoolLit _ b2) -> b1 == b2
+    (NullLit _, NullLit _) -> True
+    _ -> False)
+
 
 
 jNullP :: Parser JSON
-jNullP = (\_ -> JNull) <$> stringP "null"
+jNullP = matchToken test
+  where
+  test (NullLit _) = Just JNull
+  test _           = Nothing
 
-
-
-charP :: Char -> Parser Char
-charP x = Parser f
-    where
-        f (y:ys)
-            | y == x = Just (ys,x)
-            | otherwise = Nothing
-        f [] = Nothing 
-
-stringP :: String -> Parser String
-stringP = sequenceA . map charP
-
---bool is eiher true or false
---we will use alternative interface
 jBoolP :: Parser JSON
-jBoolP = f <$> (stringP "true" <|> stringP "false")
-  where f "true" = JBool True
-        f "false" = JBool False
-        f _       = undefined
+jBoolP = matchToken test
+  where
+  test (BoolLit _ True)  = Just (JBool True)
+  test (BoolLit _ False) = Just (JBool False)
+  test _ = Nothing
 
+jNumber :: Parser JSON
+jNumber = matchToken input
+  where
+  input (NumLit _ n) = Just (JNumber n)
+  input _            = Nothing
 
-stringLiteral :: Parser String
-stringLiteral = (charP '"' *> spanP (/= '"') <* charP '"')
-
-jString :: Parser JSON -- we need to add espacing support.
--- making sure it starts and ends with a quote and string in middle
-jString = JString <$> stringLiteral 
+jString :: Parser JSON
+jString = matchToken test
+  where
+  test (StringLit _ s) = Just (JString s)
+  test _               = Nothing
 
 sepBy :: Parser a -> Parser b -> Parser [b]
--- many parse this until it fails and the : to concatenate the results
 sepBy sep element = (:) <$> element <*> many (sep *> element) <|> pure []
--- <|> to handle the case where the parser fails, example: empty
 
 
+spaceP :: Parser ()
+spaceP = () <$ many (tokenP isWhitespace)
+  where
+  isWhitespace (EOF _) = True
+  isWhitespace _       = False
 
-spaceChar :: Parser String
-spaceChar = spanP isSpace
+
+-- jArray :: Parser JSON
+-- jArray = do
+--   symbolP (LBracket dummyPos)
+--   elements <- elementsP
+--   symbolP (RBracket dummyPos)
+--   let result = JArray elements
+--   -- Debug: Print the parsed array
+--   let _ = print ("Parsed array:", result)
+--   return result
+--   where
+--   elementsP = sepBy (symbolP (Comma dummyPos)) jValue <|> pure []
 
 jArray :: Parser JSON
-jArray = JArray <$> (charP '[' *> spaceChar *> elements <* spaceChar <* charP ']') -- starts and ends with [] and has elements in between
+jArray = do
+  symbolP (LBracket dummyPos)
+  spaceP
+  elements <- elementsP
+  spaceP
+  symbolP (RBracket dummyPos)
+  return (JArray elements)
   where
-    elements = sepBy (spaceChar *> charP ',' <* spaceChar) jValue -- elemts are separated by comma
+    elementsP = sepBy (symbolP (Comma dummyPos)) jValue
 
-jObject :: Parser JSON 
-jObject =
-  JObject <$>
-  (charP '{' *> spaceChar *> sepBy (spaceChar *> charP ',' <* spaceChar) pair <* spaceChar <* charP '}')
+
+-- jObject :: Parser JSON
+-- jObject = do
+--   symbolP (LBrace dummyPos)
+--   pairs <- pairsP
+--   symbolP (RBrace dummyPos)
+--   let result = JObject pairs
+--   -- Debug: Print the parsed object
+--   let _ = print ("Parsed object:", result)
+--   return result
+--   where
+--   pairsP = sepBy (symbolP (Comma dummyPos)) pair
+--   pair = do
+--     k <- key
+--     symbolP (Colon dummyPos)
+--     v <- jValue
+--     return (k, v)
+--   key = matchToken test
+--     where
+--     test (StringLit _ s) = Just s
+--     test _ = Nothing        
+
+jObject :: Parser JSON
+jObject = do
+  symbolP (LBrace dummyPos)
+  pairs <- pairsP
+  symbolP (RBrace dummyPos)
+  return (JObject pairs)
   where
-   pair = liftA2 (,) (stringLiteral <* spaceChar <* charP ':' <* spaceChar) jValue
-
-
-parseFile :: FilePath -> Parser a -> IO (Maybe a)
-parseFile fileName p = do
- input <- readFile fileName
- return (snd <$> runParser p input)
+    pairsP = sepBy (symbolP (Comma dummyPos)) pair
+    pair = do
+      k <- key
+      symbolP (Colon dummyPos)
+      v <- jValue
+      return (k, v)
+    key = matchToken test
+      where
+        test (StringLit _ s) = Just s  -- Match the StringLit token for keys
+        test _ = Nothing
 
 
 jValue :: Parser JSON
 jValue = jNullP <|> jBoolP <|> jNumber <|> jString <|> jArray <|> jObject
 
+parseFile :: FilePath -> Parser JSON -> IO (Either String JSON)
+parseFile fileName parser = do
+  input <- readFile fileName
+  case scanTokens input of
+    Left err -> return (Left err)
+    Right tokens -> do
+      case runParser parser tokens of
+        Just (_, result) -> return (Right result)
+        Nothing -> return (Left "Parsing failed.")
 
 
+dummyPos :: AlexPosn
+dummyPos = AlexPn 0 0 0
+
+runParse :: Parser a -> String -> Either String a
+runParse parser input = case scanTokens input of
+  Left err -> Left err
+  Right tokens -> case runParser parser tokens of
+    Just ([], result) -> Right result 
+    _ -> Left "Parsing failed."

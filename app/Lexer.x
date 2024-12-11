@@ -4,7 +4,7 @@ module Lexer (
     alexMonadScan,
     runAlex,
     Token(..),
-    AlexPosn,
+    AlexPosn(..),
     scanTokens,
     showPosn) where
 
@@ -59,6 +59,7 @@ data Token a = LBrace    { tokLoc :: a }
              | BoolLit   { tokLoc :: a, tokBool :: Bool }
              | NullLit   { tokLoc :: a }
              | EOF       { tokLoc :: a }
+             deriving (Eq)
 
 surround = ("\"" ++) . (++ "\"")
 
