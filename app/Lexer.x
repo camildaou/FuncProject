@@ -76,7 +76,7 @@ instance Show (Token a) where
   show (NullLit _) = "null"
   show (EOF _) = "EOF"
 
-  showPosn (AlexPn _ l c) = show l ++ ":" ++ show c
+showPosn (AlexPn _ l c) = show l ++ ":" ++ show c
 
 mkL :: (AlexPosn -> String -> Token AlexPosn) -> AlexInput -> Int -> Alex (Token AlexPosn)
 mkL tokfn (pos, _, _, input) len = return (tokfn pos $ take len input)
