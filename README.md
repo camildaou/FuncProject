@@ -3,7 +3,7 @@
   This repository contains a simple, minimalistic Haskell JSON parser written from scratch with the help of using Alex for the lexer to generate tokens.
   This repository was made for the functional programming course
 </p>
-<p><b>Documentation: </b><a href="https://testusjedu-my.sharepoint.com/:b:/g/personal/christina_haber_net_usj_edu_lb/EdHsAig2RMtOqsf7ZSKu1XMBRZrSH7r3zZzZalBSsXZdDg?e=ZbzdlW">Documentation</a></p>
+<p><b>Documentation: </b><a href="https://testusjedu-my.sharepoint.com/:b:/g/personal/christina_haber_net_usj_edu_lb/EdHsAig2RMtOqsf7ZSKu1XMBRZrSH7r3zZzZalBSsXZdDg?e=ZbzdlW" target="_blank">Doc</a></p>
   <h2>Contributors:</h2>
   <li>
   Camil Daou
@@ -60,7 +60,7 @@ address.state: "CA"<br>
 address.zip: "12345"<br>
 phoneNumbers: [{ type: "home", number: "555-555-5555" }, { type: "work", number: "555-555-5556" }]<br>
 isActive: True<br>
-createdAt: "2023-10-01T12:00:00Z"<br>
+createdAt: "2023-10-01T12:00:00Z"<br><br><br>
 </p>
 
 <p>
@@ -95,6 +95,21 @@ name: "John Doe"<br>
 
 </p>
 
+
+<p>
+  
+  ```
+  cabal v2-run json-parser json-files/test.json json-files/test1.json json-files/test2.json employees.name 
+  ```
+
+</p>
+
+<p>
+Alice Johnson<br>
+Bob Smith<br>
+Charlie Brown<br>
+</p>
+
 <p>
   
   ```
@@ -103,28 +118,22 @@ name: "John Doe"<br>
 
 </p>
 
-<p>
-  
-  ```
-  cabal v2-run json-parser -- json-files/test.json json-files/test1.json json-files/test2.jsonname ALLFIELDS -o output.txt
-  ```
-
-</p>
-
-<p>
-  
-</p>
+<h3>To Handle multiple files</h3>
 
 <p>
   
   ```
-  cabal v2-run json-parser json-files/test.json json-files/test1.json json-files/test2.jsonname employees.name 
+  cabal v2-run json-parser -- json-files/test.json json-files/test1.json json-files/test2.json ALLFIELDS -o output.txt
   ```
 
 </p>
 
 <p>
-Alice Johnson
-Bob Smith
-Charlie Brown
+  
+  ```
+  cabal v2-run json-parser -- json-files ALLFIELDS -o output.txt
+  ```
+
 </p>
+
+
